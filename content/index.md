@@ -1,12 +1,17 @@
 ---
-title: hello, friend
+title: Hello, Friend
 description: main landing page
 date: 2025-06-14
 ---
 
-This site is an amalgamation of various topics - CTF writeups, discovered zero-day vulnerabilities, courses I’m studying, the development process behind my projects, certifications, and countless other things that escape me at the moment. Hopefully, you’ll find something here that proves useful for whatever engagement you're working on.
+<style>
+    .ascii-art {
+        font-family: monospace;
+        white-space: pre;
+    }
+</style>
 
-Don’t be a stranger.
+Hello, friend. Welcome to my personal stash. Inside, you'll find my stash of l00t such as CTF writeups, zero-day discoveries, Feynmanesque notes, certifications, and other digital artifacts. With any luck you'll uncover something useful to whatever you're working on. If not, grab a drink, kick back, and enjoy my attempt at being 1337.
 
 ~ l00t
 
