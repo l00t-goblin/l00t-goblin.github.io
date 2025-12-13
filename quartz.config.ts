@@ -8,7 +8,7 @@ import * as Plugin from "./quartz/plugins"
  */
 const config: QuartzConfig = {
   configuration: {
-    pageTitle: "Quartz 4",
+    pageTitle: "l00t-goblin.github.io",
     pageTitleSuffix: "",
     enableSPA: true,
     enablePopovers: true,
@@ -23,9 +23,10 @@ const config: QuartzConfig = {
       fontOrigin: "googleFonts",
       cdnCaching: true,
       typography: {
-        header: "Schibsted Grotesk",
-        body: "Source Sans Pro",
-        code: "IBM Plex Mono",
+        title: "Ubuntu",
+        header: "Ubuntu",
+        body: "Ubuntu",
+        code: "Google Sans Code",
       },
       colors: {
         lightMode: {
@@ -40,8 +41,8 @@ const config: QuartzConfig = {
           textHighlight: "#fff23688",
         },
         darkMode: {
-          light: "#161618",
-          lightgray: "#393639",
+          light: "#000000",
+          lightgray: "#803D8E",
           gray: "#646464",
           darkgray: "#d4d4d4",
           dark: "#ebebec",
