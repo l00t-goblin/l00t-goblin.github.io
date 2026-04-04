@@ -1,8 +1,8 @@
 ---
-title: scrambled_payload  
+title: scrambled_payload
 description: Writeup for the scrambled_payload challenge on HackTheBox
 created: 2025-07-02
-tags: rev, ctf, practice, hackthebox  
+tags: rev, ctf, practice, hackthebox
 draft: false
 ---
 
@@ -12,11 +12,11 @@ draft: false
 
 > During a recent malware campaign multiple of our machines were hit. We were able to recover the final payload which seems to do nothing, maybe it is targeting a specific device?
 
-**Challenge Category**: 
+**Challenge Category**:
 
 > rev
 
-**Challenge Difficulty**: 
+**Challenge Difficulty**:
 
 > Very Easy
 
@@ -48,11 +48,11 @@ A.dataType = Chr((166*107)mod 256)&Chr((211*83)mod 256)&Chr((214*101)mod 256)&Ch
 
 This builds an object name character by character using one of three patterns:
 
-1. Chr((INT * INT) mod INT)
+1. Chr((INT \* INT) mod INT)
 2. Chr(INT)
 3. "CHAR"
 
-For example, Chr((211 * 95) mod 256) evaluates to "M". Using this logic across the entire expression yields the full object name.
+For example, Chr((211 \* 95) mod 256) evaluates to "M". Using this logic across the entire expression yields the full object name.
 
 To automate this, I wrote the following Python script:
 
@@ -65,14 +65,14 @@ CREATEELEMENT_RE    = re.compile(r"\.CreateElement\((.*)\)")
 def determineCharacter(token: str)-> str:
     """Parse the token and determine the character. A token can have one of the
     following formats:
-        
+
         1. Chr((INT * INT) mod INT)
         2. Chr(INT)
         3. \"CHAR\"
-        
+
     """
 
-    # Determine how the character is being created by detecting 
+    # Determine how the character is being created by detecting
     # the number of integers in the token
     n: list = NUM_RE.findall(token)
     matches: int = len(n)
@@ -90,7 +90,7 @@ def determineCharacter(token: str)-> str:
             ch = o.group(1)
         else:
             raise Exception(f"Could not extract single character out of section: {token}")
-        
+
     if ch == "":
         raise Exception(f"Could not determine character for section {token}")
 
@@ -107,12 +107,12 @@ def objectCreation()-> None:
     if m:
         # Tokens are seperated by '&'
         tokens = m.group(1).split('&')
-        
+
         for token in tokens:
             objectStr += determineCharacter(token)
     else:
         raise Exception("Could not extract internals of CreateObject()")
-    
+
     # Extract everying inside 'CreateElement()'
     m = CREATEELEMENT_RE.search(partOne)
     if m:
@@ -123,7 +123,7 @@ def objectCreation()-> None:
             elementStr += determineCharacter(token)
     else:
         raise Exception("Could not extract internals of CreateElement()")
-    
+
     print(f"""Set A = CreateObject(\"{objectStr}\").CreateElement(\"{elementStr}\")""")
 ```
 
@@ -183,7 +183,7 @@ Execute r.Pattern=^[WoS][cFe][_yR][CzE][Xce][1HN][OYN][vTj][uDU][MYj][Rr7][GN4][
 
 The first pattern ensures the flag is 36 characters long.
 
-The remaining patterns specify per-character sets; to satisfy all three, each position of the flag must be a character *common* to all three sets.
+The remaining patterns specify per-character sets; to satisfy all three, each position of the flag must be a character _common_ to all three sets.
 
 To automate this intersection, I used a Python script that:
 
@@ -205,11 +205,11 @@ def extractRegex()-> None:
     bracketTwo = BRACKET_RE.findall(patternTwo)
     if not bracketTwo:
         raise Exception("Could not extract groups out of patternTwo")
-    
+
     bracketThree = BRACKET_RE.findall(patternThree)
     if not bracketThree:
         raise Exception("Could not extract groups out of patternThree")
-    
+
     flag: str = ""
     for i in range(36):
         groupOne = bracketOne[i]

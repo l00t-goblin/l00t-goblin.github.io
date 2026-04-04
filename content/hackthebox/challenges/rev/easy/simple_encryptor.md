@@ -2,13 +2,13 @@
 title: simple_encryptor
 description: Writeup for the simple_encryptor reverse-engineering challenge on HackTheBox
 created: 2025-09-20
-tags: rev, ctf, practice, hackthebox  
+tags: rev, ctf, practice, hackthebox
 draft: false
 ---
 
 # Introduction
 
------
+---
 
 **Summary**
 
@@ -24,14 +24,14 @@ On our regular checkups of our secret flag storage server we found out that we w
 
 # Challenge
 
------
+---
 
 ## Recon
 
 We start with basic recon on the provided ELF binary.
 
 ```bash
-$ file ./encrypt 
+$ file ./encrypt
 ./encrypt: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=0bddc0a794eca6f6e2e9dac0b6190b62f07c4c75, for GNU/Linux 3.2.0, not stripped
 ```
 
@@ -53,7 +53,7 @@ $ objdump -t ./encrypt | grep ".text"
 Although this isn’t a pwn challenge, it’s still worth checking binary hardening features. Everything is enabled.
 
 ```bash
-$ pwn checksec ./encrypt 
+$ pwn checksec ./encrypt
 [*] 'encrypt'
     Arch:       amd64-64-little
     RELRO:      Full RELRO
@@ -93,7 +93,7 @@ undefined8 main(void) {
   void *flag_memory;
   FILE *flag_enc_file_handle;
   long canary;
-  
+
   canary = *(long *)(in_FS_OFFSET + 0x28);
   flag_file_handle = fopen("flag","rb");
   fseek(flag_file_handle,0,2);
@@ -222,7 +222,7 @@ if (flag == NULL) {
     return 1;
 }
 
-fread(flag, 1, size, f);	
+fread(flag, 1, size, f);
 
 uint32_t seed;
 memcpy(&seed, flag, sizeof(uint32_t));
@@ -256,7 +256,7 @@ for (int i = 0; i < FLAG_SIZE; i++) {
     int r2 = rand() & 7;
 
     flag[i] = (uint8_t)((flag[i] >> r2) | (flag[i] << (8 - r2)));
-    flag[i] = flag[i] ^ r1;	
+    flag[i] = flag[i] ^ r1;
 }
 
 // ...
@@ -293,7 +293,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    fread(flag, 1, size, f);	
+    fread(flag, 1, size, f);
 
     uint32_t seed;
     memcpy(&seed, flag, sizeof(uint32_t));
@@ -310,7 +310,7 @@ int main(int argc, char** argv) {
         int r2 = rand() & 7;
 
         flag[i] = (uint8_t)((flag[i] >> r2) | (flag[i] << (8 - r2)));
-        flag[i] = flag[i] ^ r1;	
+        flag[i] = flag[i] ^ r1;
     }
 
     printf("flag: %s\n", flag);
@@ -328,7 +328,7 @@ Compile and run to recover the flag.
 
 # References
 
------
+---
 
 - [felixcloutier.com - rcl/rcr/rol/ror](https://www.felixcloutier.com/x86/rcl:rcr:rol:ror)
 - [stackoverflow.com - Why srand(time(NULL)) is a bad seed](https://stackoverflow.com/questions/30145715/why-srandtime-is-a-bad-seed)

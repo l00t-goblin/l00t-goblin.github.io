@@ -7,19 +7,21 @@ draft: true
 ---
 
 ## Introduction
------
+
+---
 
 **Challenge Summary**:
 **Challenge Description**: This app has stored my credentials and I can only login automatically. I tried to intercept the login request and restore my password, but this seems to be a secure connection. Can you help bypass this security restriction and intercept the password in plaintext?
 **Challenge Category**: Mobile
 **Challenge Difficulty**: Easy
 
-
 ## Challenge
------
+
+---
+
 ### Setup
 
-Based on the challenge description we'll want to intercept the HTTP request containing the password. This will require us to setup an Android Man-in-the-Middle SSL pinning bypass rig (what a mouthful). 
+Based on the challenge description we'll want to intercept the HTTP request containing the password. This will require us to setup an Android Man-in-the-Middle SSL pinning bypass rig (what a mouthful).
 
 Contained within the `README.txt` file:
 
@@ -54,6 +56,7 @@ $ emulator -avd pinned_emu
 # install the APK onto the device
 adb install pinned.apk
 ```
+
 ### Enumeration
 
 As with the other mobile challenges, lets decompile the APK with `jadx`:
@@ -127,8 +130,10 @@ public void onCreate(Bundle bundle) {
 
 The `onCreate()` function just creates handlers for the various text box's in the UI as well as the button. A class `a()` is set as a callback with `setOnClickListener()`. The logic will execute as soon as we hit the purple "Login" button.
 
-
 ### Defeating Certificate Pinning
+
 ### Alternative Solution
+
 ## References
------
+
+---

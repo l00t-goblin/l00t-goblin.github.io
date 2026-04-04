@@ -7,7 +7,8 @@ draft: false
 ---
 
 # Summary
------
+
+---
 
 Jigsaw is an easy Mobile challenge on HackTheBox that hinges on understanding the Google Flutter framework. Flutter lets developers build cross-platform mobile apps from a single codebase. Once you understand how Flutter works, you can zero in on the code that derives the flag. The challenge splits the flag across three components: native library code, Dart bytecode, and decompiled Java. Your task is to reverse-engineer the flag-generation algorithm across these segments and stitch the pieces together. Solving all three yields the final flag. Overall, this was one of my favorite Mobile HTB challenges. It’s packed with learning and forces you to draw on multiple areas of domain knowledge.
 
@@ -17,7 +18,8 @@ A secret lies hidden, protected by layers of logic and scattered clues. Your tas
 **Difficulty**: Easy
 
 # Challenge
------
+
+---
 
 ## Recon
 
@@ -32,19 +34,19 @@ Next, let’s install the APK on an emulated device. I use `avdmanager` to creat
 
 After installing Jigsaw.apk on the emulator, we launch the app and see the following:
 
------
+---
 
 <img src="/assets/hackthebox/challenges/mobile/easy/mobile_jigsaw/login-screen.png" alt="login-screen" width="400" />
 
------
+---
 
 Submitting random credentials triggers this notification:
 
------
+---
 
 <img src="/assets/hackthebox/challenges/mobile/easy/mobile_jigsaw/failed-login.png" alt="failed-login-screen" width="400">
 
------
+---
 
 That seems to be the extent of the in-app functionality for now. Let’s pivot to reverse-engineering the application to see what’s happening behind the scenes.
 
@@ -231,7 +233,6 @@ sources/io/flutter/embedding/engine/loader/FlutterLoader.java
 
 The first two are flat files containing signatures and metadata for APK contents. The interesting hit is [`FlutterLoader.java`](https://api.flutter.dev/javadoc/io/flutter/embedding/engine/loader/FlutterLoader.html), which is responsible for loading Flutter resources. Notably, `ensureInitializationComplete` blocks the main thread until the Flutter native resources are fully initialized.
 
-
 ```java
 public void ensureInitializationComplete(Context applicationContext, String[] args) {
     int oldGenHeapSizeMegaBytes;
@@ -405,16 +406,16 @@ class _LoginPageState extends State<LoginPage> {
         try {
             final finallyClass = Finally();
             final decryptedFlag = await finallyClass.decryptFlag();
-            
+
         } catch (e) {
-            
+
         }
     }
 
     void _login() {
         // Check if the username and password are correct
         if (_usernameController.text == 'nimda' && _passwordController.text == 'guessme') {
-            
+
             Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => HomePage(username: _usernameController.text)),
@@ -450,16 +451,15 @@ class _LoginPageState extends State<LoginPage> {
 
 There’s a `_login()` function that hardcodes credentials. Using `nimda` / `guessme` yields:
 
------
+---
 
 <img src="/assets/hackthebox/challenges/mobile/easy/mobile_jigsaw/no-flag.png" alt="login-screen" width="400" />
 
------
+---
 
 No luck. :\
 
 More interesting is `fetchAndDecryptFlag()`, which invokes `decryptFlag()` in the `Finally` class. Let’s extract that class from the `kernel_blob.bin` strings dump and inspect the implementation.
-
 
 ```dart
 // ...
@@ -508,7 +508,6 @@ class Finally {
 ```
 
 `decryptFlag()` delegates to `AESCombinedService.getFlag()`, which embeds a key and IV. That method base64-decodes the hardcoded `_encryptedFlagBase64` and then decrypts it. To understand where the key and IV originate—and whether they’re static or derived at runtime, we need to examine `AESCombinedService.getFlag()` next.
-
 
 ```dart
 class AESCombinedService {
@@ -611,7 +610,6 @@ def partone():
 # ...
 ```
 
-
 ### parttwo
 
 Next up is `_aesService.getparttwo()`, defined in the `AESService` class:
@@ -664,35 +662,35 @@ I’ll admit I didn’t fully read the native implementation here. Instead, I to
 
 Java.perform(() => {
   function bytes_to_hex(jBarr) {
-    const a = Java.array("byte", jBarr);
-    let out = '';
+    const a = Java.array("byte", jBarr)
+    let out = ""
     for (let i = 0; i < a.length; i++) {
-      out += ('0' + (a[i] & 0xff).toString(16)).slice(-2);
+      out += ("0" + (a[i] & 0xff).toString(16)).slice(-2)
     }
-    return out;
+    return out
   }
 
-  const Map = Java.use("java.util.Map");
-  const Entry = Java.use("java.util.Map$Entry");
-  const MainActivityKt = Java.use("com.example.menascyber.MainActivityKt").$new();
+  const Map = Java.use("java.util.Map")
+  const Entry = Java.use("java.util.Map$Entry")
+  const MainActivityKt = Java.use("com.example.menascyber.MainActivityKt").$new()
 
   // invoke and capture the retval from MainActivityKt.get_parttwo()
-  const map = MainActivityKt.get_parttwo();
+  const map = MainActivityKt.get_parttwo()
   if (!map) {
-    console.error("Could not get key/iv map");
-    return;
+    console.error("Could not get key/iv map")
+    return
   }
 
   // convert the Java Map<String, byte[]> to a JS object and print
-  const m = Java.cast(map, Map);
-  const it = m.entrySet().iterator();
+  const m = Java.cast(map, Map)
+  const it = m.entrySet().iterator()
   while (it.hasNext()) {
-    const e = Java.cast(it.next(), Entry);
-    const k = e.getKey().toString();
-    const v = e.getValue();
-    console.log(`${k} => ${bytes_to_hex(v)}`);
+    const e = Java.cast(it.next(), Entry)
+    const k = e.getKey().toString()
+    const v = e.getValue()
+    console.log(`${k} => ${bytes_to_hex(v)}`)
   }
-});
+})
 ```
 
 Run it:
@@ -774,66 +772,66 @@ I took the fast path here: rather than reverse-engineering the native library, I
 
 setTimeout(function () {
   function find_library_base(library_name) {
-    const base_address = Module.findBaseAddress(library_name);
-    if (!base_address) return null;
-    return base_address;
+    const base_address = Module.findBaseAddress(library_name)
+    if (!base_address) return null
+    return base_address
   }
 
   function bytes_to_hex(bArr) {
-    const u8 = new Uint8Array(bArr);
-    let s = "";
-    for (let i = 0; i < u8.length; i++) s += u8[i].toString(16).padStart(2, "0");
-    return s;
+    const u8 = new Uint8Array(bArr)
+    let s = ""
+    for (let i = 0; i < u8.length; i++) s += u8[i].toString(16).padStart(2, "0")
+    return s
   }
 
   Java.perform(() => {
-    const module_name = "libmenascyber.so";
+    const module_name = "libmenascyber.so"
 
-    const lib_base = find_library_base(module_name);
+    const lib_base = find_library_base(module_name)
     if (!lib_base) {
-      console.error(`Could not find base of ${module_name}`);
-      return;
+      console.error(`Could not find base of ${module_name}`)
+      return
     }
 
-    console.log(`${module_name} @ ${lib_base}`);
+    console.log(`${module_name} @ ${lib_base}`)
 
     // resolve the addresses of the native symbols we need.
-    const partthree_1_addr = Module.findExportByName(module_name, "partthree_1");
-    const partthree_2_addr = Module.findExportByName(module_name, "partthree_2");
+    const partthree_1_addr = Module.findExportByName(module_name, "partthree_1")
+    const partthree_2_addr = Module.findExportByName(module_name, "partthree_2")
 
-    console.log(`partthree_1 @ ${partthree_1_addr}`);
-    console.log(`partthree_2 @ ${partthree_2_addr}`);
+    console.log(`partthree_1 @ ${partthree_1_addr}`)
+    console.log(`partthree_2 @ ${partthree_2_addr}`)
 
     // wrap them as NativeFunction so we can invoke them.
-    const partthree_1_nf = new NativeFunction(partthree_1_addr, "pointer", []);
-    const partthree_2_nf = new NativeFunction(partthree_2_addr, "pointer", []);
+    const partthree_1_nf = new NativeFunction(partthree_1_addr, "pointer", [])
+    const partthree_2_nf = new NativeFunction(partthree_2_addr, "pointer", [])
 
     // invoke partthree_1 (returns a pointer in .data)
-    const partthree_1_ret = partthree_1_nf();
+    const partthree_1_ret = partthree_1_nf()
     if (partthree_1_ret.isNull()) {
-      console.error("partthree_1_nf returned NULL");
-      return;
+      console.error("partthree_1_nf returned NULL")
+      return
     }
-    console.log(`partthree_1() -> ${partthree_1_ret}`);
+    console.log(`partthree_1() -> ${partthree_1_ret}`)
 
-    const key_bArr = Memory.readByteArray(partthree_1_ret, 32);
-    const key = bytes_to_hex(key_bArr);
+    const key_bArr = Memory.readByteArray(partthree_1_ret, 32)
+    const key = bytes_to_hex(key_bArr)
 
     // invoke partthree_2
-    const partthree_2_ret = partthree_2_nf();
+    const partthree_2_ret = partthree_2_nf()
     if (partthree_2_ret.isNull()) {
-      console.error("partthree_2_nf returned NULL");
-      return;
+      console.error("partthree_2_nf returned NULL")
+      return
     }
-    console.log(`partthree_2() -> ${partthree_2_ret}`);
+    console.log(`partthree_2() -> ${partthree_2_ret}`)
 
-    const iv_bArr = Memory.readByteArray(partthree_2_ret, 16);
-    const iv = bytes_to_hex(iv_bArr);
+    const iv_bArr = Memory.readByteArray(partthree_2_ret, 16)
+    const iv = bytes_to_hex(iv_bArr)
 
-    console.log(`key: ${key}`);
-    console.log(`iv: ${iv}`);
-  });
-}, 5000);
+    console.log(`key: ${key}`)
+    console.log(`iv: ${iv}`)
+  })
+}, 5000)
 ```
 
 Run the script and capture the results:
@@ -1017,9 +1015,11 @@ if __name__ == "__main__":
 </details>
 
 # References
------
+
+---
+
 1. **jadx** [https://github.com/skylot/jadx](https://github.com/skylot/jadx)
-2. **Apktool** [https://apktool.org/](https://apktool.org/) 
+2. **Apktool** [https://apktool.org/](https://apktool.org/)
 3. **`FlutterEngine`** [https://api.flutter.dev/javadoc/io/flutter/embedding/engine/FlutterEngine.html](https://api.flutter.dev/javadoc/io/flutter/embedding/engine/FlutterEngine.html)
 4. **`MethodChannel`** [https://api.flutter.dev/javadoc/io/flutter/plugin/common/MethodChannel.html](https://api.flutter.dev/javadoc/io/flutter/plugin/common/MethodChannel.html)
 5. **`MethodCall`** [https://api.flutter.dev/javadoc/io/flutter/plugin/common/MethodCall.html](https://api.flutter.dev/javadoc/io/flutter/plugin/common/MethodCall.html)

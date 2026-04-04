@@ -7,7 +7,8 @@ draft: false
 ---
 
 ## Introduction
------
+
+---
 
 **Challenge Summary**: Don’t Overreact is a very easy Mobile challenge on HackTheBox. A quick code review reveals it’s a React Native Android application, which shifts our focus to the `index.android.bundle` file that contains the JavaScript. If you’re a meticulous code-reviewer, you can solve this entirely via static analysis without loading the APK on a device. That said, installing the APK can give useful hints about what to look for in the JavaScript.
 
@@ -18,7 +19,8 @@ draft: false
 **Challenge Category**: Mobile
 
 ## Enumeration
------
+
+---
 
 We begin like most Mobile challenges: decompiling the APK with jadx.
 
@@ -71,7 +73,8 @@ Next, review AndroidManifest.xml:
 The package is `com.awesomeproject` with a single Activity: `com.awesomeproject.MainActivity`. It requests only `android.permission.INTERNET`, suggesting some network usage. Nothing else stands out. Let’s pivot into the app code.
 
 ## Reverse-Engineering
------
+
+---
 
 Open `com/awesomeproject/MainApplication.java` and review its contents:
 
@@ -132,11 +135,11 @@ After a quick search, we find `app-release/resources/assets/index.android.bundle
 
 Before diving into minified code (a task I wouldn’t wish on my worst enemy), install the APK on a device or emulator to see if the UI offers any hints.
 
------
+---
 
 <img src="/assets/hackthebox/challenges/mobile/easy/mobile_dont_overreact/launch.png" alt="launch" width="400" />
 
------
+---
 
 Nothing but the HackTheBox logo. Not much, but a small breadcrumb.
 
@@ -145,17 +148,22 @@ Now, search the beautified JS for obvious strings: “htb”, “hackthebox”, 
 ```js
 // ...
 
-__d(function(g, r, i, a, m, e, d) {
-    Object.defineProperty(e, "__esModule", {
-        value: !0
-    }), e.myConfig = void 0;
+__d(
+  function (g, r, i, a, m, e, d) {
+    ;(Object.defineProperty(e, "__esModule", {
+      value: !0,
+    }),
+      (e.myConfig = void 0))
     var t = {
-        importantData: "baNaNa".toLowerCase(),
-        apiUrl: 'https://www.hackthebox.eu/',
-        debug: 'SFRCezIzbTQxbl9jNDFtXzRuZF9kMG43XzB2MzIyMzRjN30='
-    };
+      importantData: "baNaNa".toLowerCase(),
+      apiUrl: "https://www.hackthebox.eu/",
+      debug: "SFRCezIzbTQxbl9jNDFtXzRuZF9kMG43XzB2MzIyMzRjN30=",
+    }
     e.myConfig = t
-}, 400, []);
+  },
+  400,
+  [],
+)
 
 // ...
 ```
@@ -169,7 +177,9 @@ $ echo 'SFRCezIzbTQxbl9jNDFtXzRuZF9kMG43XzB2MzIyMzRjN30=' | base64 -d
 Cheers, Mate :D
 
 # References
------
+
+---
+
 - [GitHub: facebook/react-native](https://github.com/facebook/react-native)
 - [reactnative.dev](https://reactnative.dev/)
 - [Medium: What is index.android.bundle in React Native and Why You Shouldn’t Commit to Repository](https://medium.com/@naandalist/what-is-index-android-bundle-in-react-native-and-why-you-shouldnt-commit-to-repository-be5774b26652)

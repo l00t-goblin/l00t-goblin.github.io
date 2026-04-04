@@ -10,7 +10,7 @@ date: 2025-06-18
 - [Stack overflow in parse_val() and parse_inline_array() when encountering an arbitrary amount of opening brackets in an in-line array](https://github.com/cktan/tomlc17/issues/18)
 - [Stack overflow in parse_array() when encountering an arbitrary amount of opening brackets](https://github.com/cktan/tomlc99/issues/94)
 - [Excessive memory allocation due to arbitrary offsets in Encapsulated ICAP header](https://github.com/go-icap/icap/issues/5)
-- [Integer Overflow / Wraparound in _pdfioValueRead & Heap Overflow](https://github.com/michaelrsweet/pdfio/issues/52)
+- [Integer Overflow / Wraparound in \_pdfioValueRead & Heap Overflow](https://github.com/michaelrsweet/pdfio/issues/52)
 - [Added missing initialization for ivlen](https://github.com/michaelrsweet/pdfio/pull/51)
 
 # ctf

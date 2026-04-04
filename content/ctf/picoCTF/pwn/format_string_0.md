@@ -15,18 +15,20 @@ draft: false
 
 # Introduction
 
------
+---
 
 **challenge description**
+
 > Can you use your knowledge of format strings to make the customers happy?
 
 **challenge hints**
+
 > This is an introduction of format string vulnerabilities. Look up "format specifiers" if you have never seen them before.
 > Just try out the different options
 
 # Enumeration
 
------
+---
 
 We start out with enumerating the application given to us:
 
@@ -54,7 +56,7 @@ $ objdump -t format-string-0 | grep ".bss"
 0000000000404080 g       .bss   0000000000000000              __bss_start
 00000000004040a0 g     O .bss   0000000000000040              flag
 
-$ pwn checksec format-string-0 
+$ pwn checksec format-string-0
 [*] '/home/Bugz_-picoctf/format-string-0'
     Arch:       amd64-64-little
     RELRO:      Partial RELRO
@@ -69,15 +71,15 @@ $ pwn checksec format-string-0
 
 We are dealing with an ELF x64 binary which is dynamically linked. The ELF is not stripped which means we will aid us during reverse engineering. There are a couple unique symbols in the binary such as `on_menu`, `serve_bob`, `serve_patrick` and of course `main`.
 
-In the .bss section, we see that there is a flag variable. This means that the flag will possible stored globally. 
+In the .bss section, we see that there is a flag variable. This means that the flag will possible stored globally.
 
-The application is not compiled with stack canaries which will make any buffer overflows easier to exploit. The NX bit is enabled which means we won't be able to inject shellcode onto the stack. This will limit our exploitation to ROP, ret2libc, or some sort of PLT/GOT overwrite. Lastly, PIE is disabled so we won't have to worry about determining the PIE base address. 
+The application is not compiled with stack canaries which will make any buffer overflows easier to exploit. The NX bit is enabled which means we won't be able to inject shellcode onto the stack. This will limit our exploitation to ROP, ret2libc, or some sort of PLT/GOT overwrite. Lastly, PIE is disabled so we won't have to worry about determining the PIE base address.
 
-The code is provided so lets jump into that. 
+The code is provided so lets jump into that.
 
 # Code Review
 
------
+---
 
 ```c
 #include <stdio.h>
@@ -126,7 +128,7 @@ int main(int argc, char **argv){
     setresgid(gid, gid, gid);
 
     serve_patrick();
-  
+
     return 0;
 }
 
@@ -183,12 +185,11 @@ void serve_bob() {
 }
 ```
 
-
 The `main` function opens the flag.txt file, reads the contents of the file into a global buffer call `flag`. A signal handler is then setup where upon receiving a `SIGSEGV`, the program will call `sigsegv_handler` which prints the flag to stdout before exiting. After setting the signal handler, the program calls `serve_patrick` before returning zero.
 
-Within `serve_patrick`, we see that the first thing which occurs is printing an option menu. Then the user is prompted for some input. The user will write their input into `choice2` which is allocated `BUFSIZE` amount of memory where `BUFSIZE` is 32 bytes. 
+Within `serve_patrick`, we see that the first thing which occurs is printing an option menu. Then the user is prompted for some input. The user will write their input into `choice2` which is allocated `BUFSIZE` amount of memory where `BUFSIZE` is 32 bytes.
 
-If what the user inputs is one of the items printed previously, then it is printed to `stdout` here. If the number of bytes written to `stdout` is greater than `2 * BUFFSIZE`, then the `serve_bob` will be invoked which will perform almost an identical routine. 
+If what the user inputs is one of the items printed previously, then it is printed to `stdout` here. If the number of bytes written to `stdout` is greater than `2 * BUFFSIZE`, then the `serve_bob` will be invoked which will perform almost an identical routine.
 
 With the code reviewed, lets talk about some of the bugs within the code. Firstly, the program is called `format_string_0` which implies that the program probably has format string vulnerabilities. There are two format string vulnerabilities contained within this application: One of line 68 and one on line 98. Additionally, there is a buffer overflow vulnerability on line 62 within the `scanf`. (If you follow along with the program and select the correct prompts, you will get the flag. This is because the format string vulnerabilities will cause a SIGSEGV but I'm not interested in the format string vulnerabilities in this challenge. If you want to read more about format strings, look at [pie_time_2](pie_time_2.md))
 
@@ -206,7 +207,7 @@ char data[32];
 scanf("%31s", data);
 ```
 
-We don't need to provide the `&` because a character array is already a pointer to an array in memory. Additionally, we need to limit how many characters the user is allowed to input since the space we allocated is finite. We allow the user to input 31 bytes and reserve space for the NULL terminating byte. 
+We don't need to provide the `&` because a character array is already a pointer to an array in memory. Additionally, we need to limit how many characters the user is allowed to input since the space we allocated is finite. We allow the user to input 31 bytes and reserve space for the NULL terminating byte.
 
 If we look back at the challenge code, `scanf` is implemented as:
 
@@ -214,10 +215,11 @@ If we look back at the challenge code, `scanf` is implemented as:
 scanf("%s", choice1);
 ```
 
-If the programmer forgets to include the size specifier, then the program will allow the user to write arbitrary amount of data and trigger a buffer overflow. With the buffer overflow, we can overwrite arbitrary amount of memory on the stack. Since we can corrupt the stack, we can overwrite metadata contained on the stack which the program requires to function properly (see [pie_time_2 - exploitation](pie_time_2.md)). 
+If the programmer forgets to include the size specifier, then the program will allow the user to write arbitrary amount of data and trigger a buffer overflow. With the buffer overflow, we can overwrite arbitrary amount of memory on the stack. Since we can corrupt the stack, we can overwrite metadata contained on the stack which the program requires to function properly (see [pie_time_2 - exploitation](pie_time_2.md)).
 
 # Exploitation
------
+
+---
 
 The exploitation for this challenge is straightforward. We just need to trigger a `SIGSEGV` to get a flag.
 
@@ -286,7 +288,7 @@ RET_OFFSET = 56
 ADDR = 0xDEADBEEF
 
 payload = flat(
-    b"A" * RET_OFFSET, 
+    b"A" * RET_OFFSET,
     ADDR,
 )
 

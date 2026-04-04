@@ -2,7 +2,7 @@
 title: flag_casino
 description: Writeup for the flag_casino challenge on HackTheBox
 created: 2025-12-15
-tags: rev, ctf, practice, hackthebox  
+tags: rev, ctf, practice, hackthebox
 draft: false
 ---
 
@@ -33,7 +33,7 @@ draft: false
 As usual, we begin by examining the binary:
 
 ```bash
-$ file casino 
+$ file casino
 casino: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=7618b017ef4299337610a90a0a6ccb7f9efc44a4, for GNU/Linux 3.2.0, not stripped
 ```
 
@@ -122,6 +122,7 @@ The logic is simple:
 5. Continue if equal, exit if not
 
 Let’s inspect the check array:
+
 ```
 .data:0000000000004080 check           dd 244B28BEh, 0AF77805h, 110DFC17h, 7AFC3A1h, 6AFEC533h
 .data:0000000000004094                 dd 4ED659A2h, 33C5D4B0h, 286582B8h, 43383720h, 55A14FCh
@@ -179,7 +180,7 @@ def main()-> None:
                 # Attempt next guess
                 p.sendline(c.encode())
                 resp = p.recvline()
-                
+
                 if b"INCORRECT" in resp:
                     continue
 
@@ -194,7 +195,7 @@ def main()-> None:
                     p.close()
                 except Exception:
                     pass
-        
+
     print(f"Flag: {flag}")
 
 if __name__ == "__main__":
@@ -245,7 +246,7 @@ def main()-> None:
         flag += mapping[val]
 
     print(flag)
-    
+
 if __name__ == "__main__":
     main()
 ```

